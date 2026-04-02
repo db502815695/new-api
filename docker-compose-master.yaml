@@ -1,0 +1,58 @@
+services:
+  new-api-master:
+    image: 3305681059/new-api:latest
+    container_name: new-api-master
+    restart: always
+    command: --log-dir /app/logs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./master-data:/data
+      - ./master-logs:/app/logs
+    environment:
+      # External MySQL 8 DSN. Replace host/user/password/db before deployment.
+      - SQL_DSN=db_user:db_password@tcp(10.0.0.10:3306)/new-api?charset=utf8mb4&parseTime=True&loc=Local
+      # Keep this password identical to the Redis service command below.
+      - REDIS_CONN_STRING=redis://:replace-with-redis-password@redis:6379/0
+      # All nodes must use the same SESSION_SECRET and CRYPTO_SECRET.
+      - SESSION_SECRET=replace-with-a-strong-random-string
+      - CRYPTO_SECRET=replace-with-the-same-strong-random-string
+      - TZ=Asia/Shanghai
+      - ERROR_LOG_ENABLED=true
+      - BATCH_UPDATE_ENABLED=true
+      - SYNC_FREQUENCY=60
+      # Optional:
+      # - BATCH_UPDATE_INTERVAL=5
+      # - SESSION_SECRET=use-the-same-value-on-every-node
+      # - CRYPTO_SECRET=use-the-same-value-on-every-node
+    depends_on:
+      - redis
+    networks:
+      - new-api-master-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: new-api-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "replace-with-redis-password"]
+    ports:
+      # Only expose to the slave node via security group / firewall.
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - new-api-master-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "replace-with-redis-password", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  new-api-master-network:
+    driver: bridge
