@@ -1,6 +1,6 @@
 services:
   new-api-slave:
-    image: 3305681059/new-api:latest
+    image: ghcr.io/bobobi0208/new-api:latest
     container_name: new-api-slave
     restart: always
     command: --log-dir /app/logs
