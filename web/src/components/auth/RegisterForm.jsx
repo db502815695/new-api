@@ -80,6 +80,9 @@ const RegisterForm = () => {
     email: '',
     verification_code: '',
     wechat_verification_code: '',
+    accepted_user_agreement: false,
+    accepted_privacy_policy: false,
+    accepted_usage_policy: false,
   });
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
@@ -103,9 +106,6 @@ const RegisterForm = () => {
   const [customOAuthLoading, setCustomOAuthLoading] = useState({});
   const [disableButton, setDisableButton] = useState(false);
   const [countdown, setCountdown] = useState(30);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [hasUserAgreement, setHasUserAgreement] = useState(false);
-  const [hasPrivacyPolicy, setHasPrivacyPolicy] = useState(false);
   const [githubButtonState, setGithubButtonState] = useState('idle');
   const [githubButtonDisabled, setGithubButtonDisabled] = useState(false);
   const githubTimeoutRef = useRef(null);
@@ -149,10 +149,6 @@ const RegisterForm = () => {
       setTurnstileEnabled(true);
       setTurnstileSiteKey(status.turnstile_site_key);
     }
-
-    // 从 status 获取用户协议和隐私政策的启用状态
-    setHasUserAgreement(status?.user_agreement_enabled || false);
-    setHasPrivacyPolicy(status?.privacy_policy_enabled || false);
   }, [status]);
 
   useEffect(() => {
@@ -177,6 +173,9 @@ const RegisterForm = () => {
   }, []);
 
   const onWeChatLoginClicked = () => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setWechatLoading(true);
     setShowWeChatLoginModal(true);
     setWechatLoading(false);
@@ -215,7 +214,23 @@ const RegisterForm = () => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
   }
 
+  const hasAcceptedAllPolicies =
+    inputs.accepted_user_agreement &&
+    inputs.accepted_privacy_policy &&
+    inputs.accepted_usage_policy;
+
+  const ensureRegisterPoliciesAccepted = () => {
+    if (hasAcceptedAllPolicies) {
+      return true;
+    }
+    showInfo(t('请先阅读并同意用户协议、隐私政策和使用政策'));
+    return false;
+  };
+
   async function handleSubmit(e) {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     if (password.length < 8) {
       showInfo('密码长度不得小于 8 位！');
       return;
@@ -283,6 +298,9 @@ const RegisterForm = () => {
     if (githubButtonDisabled) {
       return;
     }
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setGithubLoading(true);
     setGithubButtonDisabled(true);
     setGithubButtonState('redirecting');
@@ -302,6 +320,9 @@ const RegisterForm = () => {
   };
 
   const handleDiscordClick = () => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setDiscordLoading(true);
     try {
       onDiscordOAuthClicked(status.discord_client_id, { shouldLogout: true });
@@ -311,6 +332,9 @@ const RegisterForm = () => {
   };
 
   const handleOIDCClick = () => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setOidcLoading(true);
     try {
       onOIDCClicked(
@@ -325,6 +349,9 @@ const RegisterForm = () => {
   };
 
   const handleLinuxDOClick = () => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setLinuxdoLoading(true);
     try {
       onLinuxDOOAuthClicked(status.linuxdo_client_id, { shouldLogout: true });
@@ -334,6 +361,9 @@ const RegisterForm = () => {
   };
 
   const handleCustomOAuthClick = (provider) => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setCustomOAuthLoading((prev) => ({ ...prev, [provider.slug]: true }));
     try {
       onCustomOAuthClicked(provider, { shouldLogout: true });
@@ -345,6 +375,9 @@ const RegisterForm = () => {
   };
 
   const handleEmailRegisterClick = () => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     setEmailRegisterLoading(true);
     setShowEmailRegister(true);
     setEmailRegisterLoading(false);
@@ -357,6 +390,9 @@ const RegisterForm = () => {
   };
 
   const onTelegramLoginClicked = async (response) => {
+    if (!ensureRegisterPoliciesAccepted()) {
+      return;
+    }
     const fields = [
       'id',
       'first_name',
@@ -520,6 +556,63 @@ const RegisterForm = () => {
                   </div>
                 )}
 
+                <div className='pt-2 space-y-2'>
+                  <Checkbox
+                    checked={inputs.accepted_user_agreement}
+                    onChange={(e) =>
+                      handleChange('accepted_user_agreement', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#terms'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('用户协议')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                  <Checkbox
+                    checked={inputs.accepted_privacy_policy}
+                    onChange={(e) =>
+                      handleChange('accepted_privacy_policy', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#privacy'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('隐私政策')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                  <Checkbox
+                    checked={inputs.accepted_usage_policy}
+                    onChange={(e) =>
+                      handleChange('accepted_usage_policy', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#usage'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('使用政策')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                </div>
+
                 <Divider margin='12px' align='center'>
                   {t('或')}
                 </Divider>
@@ -637,43 +730,62 @@ const RegisterForm = () => {
                   </>
                 )}
 
-                {(hasUserAgreement || hasPrivacyPolicy) && (
-                  <div className='pt-4'>
-                    <Checkbox
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    >
-                      <Text size='small' className='text-gray-600'>
-                        {t('我已阅读并同意')}
-                        {hasUserAgreement && (
-                          <>
-                            <a
-                              href='/user-agreement'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
-                            >
-                              {t('用户协议')}
-                            </a>
-                          </>
-                        )}
-                        {hasUserAgreement && hasPrivacyPolicy && t('和')}
-                        {hasPrivacyPolicy && (
-                          <>
-                            <a
-                              href='/privacy-policy'
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
-                            >
-                              {t('隐私政策')}
-                            </a>
-                          </>
-                        )}
-                      </Text>
-                    </Checkbox>
-                  </div>
-                )}
+                <div className='pt-4 space-y-2'>
+                  <Checkbox
+                    checked={inputs.accepted_user_agreement}
+                    onChange={(e) =>
+                      handleChange('accepted_user_agreement', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#terms'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('用户协议')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                  <Checkbox
+                    checked={inputs.accepted_privacy_policy}
+                    onChange={(e) =>
+                      handleChange('accepted_privacy_policy', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#privacy'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('隐私政策')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                  <Checkbox
+                    checked={inputs.accepted_usage_policy}
+                    onChange={(e) =>
+                      handleChange('accepted_usage_policy', e.target.checked)
+                    }
+                  >
+                    <Text size='small' className='text-gray-600'>
+                      {t('我已阅读并同意')}
+                      <a
+                        href='/omnai-legal.html#usage'
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:text-blue-800 mx-1'
+                      >
+                        {t('使用政策')}
+                      </a>
+                    </Text>
+                  </Checkbox>
+                </div>
 
                 <div className='space-y-2 pt-2'>
                   <Button
@@ -683,9 +795,7 @@ const RegisterForm = () => {
                     htmlType='submit'
                     onClick={handleSubmit}
                     loading={registerLoading}
-                    disabled={
-                      (hasUserAgreement || hasPrivacyPolicy) && !agreedToTerms
-                    }
+                    disabled={!hasAcceptedAllPolicies}
                   >
                     {t('注册')}
                   </Button>
