@@ -11,10 +11,10 @@ services:
       - ./slave-logs:/app/logs
     environment:
       NODE_TYPE: slave
-      SQL_DSN: ${CLUSTER_SQL_DSN}
+      SQL_DSN: ${SQL_DSN}
       REDIS_CONN_STRING: redis://:${CLUSTER_REDIS_PASSWORD}@${MASTER_REDIS_HOST}:6379/0
-      SESSION_SECRET: ${CLUSTER_SESSION_SECRET}
-      CRYPTO_SECRET: ${CLUSTER_CRYPTO_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CRYPTO_SECRET: ${CRYPTO_SECRET}
       TZ: ${TZ}
       ERROR_LOG_ENABLED: "true"
       BATCH_UPDATE_ENABLED: "true"

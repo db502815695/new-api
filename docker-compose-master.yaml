@@ -10,10 +10,10 @@ services:
       - ./master-data:/data
       - ./master-logs:/app/logs
     environment:
-      SQL_DSN: ${CLUSTER_SQL_DSN}
+      SQL_DSN: ${SQL_DSN}
       REDIS_CONN_STRING: redis://:${CLUSTER_REDIS_PASSWORD}@redis:6379/0
-      SESSION_SECRET: ${CLUSTER_SESSION_SECRET}
-      CRYPTO_SECRET: ${CLUSTER_CRYPTO_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CRYPTO_SECRET: ${CRYPTO_SECRET}
       TZ: ${TZ}
       ERROR_LOG_ENABLED: "true"
       BATCH_UPDATE_ENABLED: "true"
