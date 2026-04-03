@@ -10,17 +10,14 @@ services:
       - ./master-data:/data
       - ./master-logs:/app/logs
     environment:
-      # External MySQL 8 DSN. Replace host/user/password/db before deployment.
-      - SQL_DSN=db_user:db_password@tcp(10.0.0.10:3306)/new-api?charset=utf8mb4&parseTime=True&loc=Local
-      # Keep this password identical to the Redis service command below.
-      - REDIS_CONN_STRING=redis://:replace-with-redis-password@redis:6379/0
-      # All nodes must use the same SESSION_SECRET and CRYPTO_SECRET.
-      - SESSION_SECRET=replace-with-a-strong-random-string
-      - CRYPTO_SECRET=replace-with-the-same-strong-random-string
-      - TZ=Asia/Shanghai
-      - ERROR_LOG_ENABLED=true
-      - BATCH_UPDATE_ENABLED=true
-      - SYNC_FREQUENCY=60
+      SQL_DSN: ${CLUSTER_SQL_DSN}
+      REDIS_CONN_STRING: redis://:${CLUSTER_REDIS_PASSWORD}@redis:6379/0
+      SESSION_SECRET: ${CLUSTER_SESSION_SECRET}
+      CRYPTO_SECRET: ${CLUSTER_CRYPTO_SECRET}
+      TZ: ${TZ}
+      ERROR_LOG_ENABLED: "true"
+      BATCH_UPDATE_ENABLED: "true"
+      SYNC_FREQUENCY: "60"
       # Optional:
       # - BATCH_UPDATE_INTERVAL=5
       # - SESSION_SECRET=use-the-same-value-on-every-node
@@ -39,7 +36,7 @@ services:
     image: redis:7-alpine
     container_name: new-api-redis
     restart: always
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "replace-with-redis-password"]
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${CLUSTER_REDIS_PASSWORD}"]
     ports:
       # Only expose to the slave node via security group / firewall.
       - "6379:6379"
@@ -48,7 +45,7 @@ services:
     networks:
       - new-api-master-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "replace-with-redis-password", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${CLUSTER_REDIS_PASSWORD}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
