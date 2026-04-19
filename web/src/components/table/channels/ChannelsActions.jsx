@@ -57,6 +57,7 @@ const ChannelsActions = ({
   pageSize,
   setActivePage,
   t,
+  onShowCacheStats,
 }) => {
   return (
     <div className='flex flex-col gap-2'>
@@ -88,6 +89,15 @@ const ChannelsActions = ({
             className='w-full md:w-auto'
           >
             {t('批量设置标签')}
+          </Button>
+
+          <Button
+            size='small'
+            type='tertiary'
+            onClick={() => onShowCacheStats && onShowCacheStats()}
+            className='w-full md:w-auto'
+          >
+            {t('缓存统计')}
           </Button>
 
           <Dropdown

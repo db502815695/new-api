@@ -34,11 +34,14 @@ import EditChannelModal from './modals/EditChannelModal';
 import EditTagModal from './modals/EditTagModal';
 import MultiKeyManageModal from './modals/MultiKeyManageModal';
 import ChannelUpstreamUpdateModal from './modals/ChannelUpstreamUpdateModal';
+import CacheStatsModal from './modals/CacheStatsModal';
 import { createCardProPagination } from '../../../helpers/utils';
+import { useState } from 'react';
 
 const ChannelsPage = () => {
   const channelsData = useChannelsData();
   const isMobile = useIsMobile();
+  const [showCacheStats, setShowCacheStats] = useState(false);
 
   return (
     <>
@@ -73,6 +76,10 @@ const ChannelsPage = () => {
         onConfirm={channelsData.applyUpstreamUpdates}
         onCancel={channelsData.closeUpstreamUpdateModal}
       />
+      <CacheStatsModal
+        visible={showCacheStats}
+        onCancel={() => setShowCacheStats(false)}
+      />
 
       {/* Main Content */}
       {channelsData.globalPassThroughEnabled ? (
@@ -94,7 +101,7 @@ const ChannelsPage = () => {
       <CardPro
         type='type3'
         tabsArea={<ChannelsTabs {...channelsData} />}
-        actionsArea={<ChannelsActions {...channelsData} />}
+        actionsArea={<ChannelsActions {...channelsData} onShowCacheStats={() => setShowCacheStats(true)} />}
         searchArea={<ChannelsFilters {...channelsData} />}
         paginationArea={createCardProPagination({
           currentPage: channelsData.activePage,

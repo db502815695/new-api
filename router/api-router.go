@@ -245,7 +245,19 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.POST("/upstream_updates/apply_all", controller.ApplyAllChannelUpstreamModelUpdates)
 			channelRoute.POST("/upstream_updates/detect", controller.DetectChannelUpstreamModelUpdates)
 			channelRoute.POST("/upstream_updates/detect_all", controller.DetectAllChannelUpstreamModelUpdates)
+			channelRoute.GET("/cache_stats", controller.GetChannelCacheStats)
 		}
+		channelHealthRoute := apiRouter.Group("/channel_health")
+		channelHealthRoute.Use(middleware.AdminAuth())
+		{
+			channelHealthRoute.GET("/snapshots", controller.GetAllChannelHealthSnapshots)
+			channelHealthRoute.GET("/snapshots/:id", controller.GetChannelHealthSnapshot)
+			channelHealthRoute.POST("/reset/:id", controller.ResetChannelHealth)
+			channelHealthRoute.POST("/weight/:id", controller.AdjustChannelWeight)
+			channelHealthRoute.POST("/ability", controller.UpdateGroupChannelAbility)
+			channelHealthRoute.POST("/reset_group", controller.ResetGroupChannelHealth)
+		}
+		apiRouter.GET("/group_availability", middleware.UserAuth(), controller.GetGroupAvailability)
 		tokenRoute := apiRouter.Group("/token")
 		tokenRoute.Use(middleware.UserAuth())
 		{
@@ -295,6 +307,14 @@ func SetApiRouter(router *gin.Engine) {
 		dataRoute.GET("/", middleware.AdminAuth(), controller.GetAllQuotaDates)
 		dataRoute.GET("/users", middleware.AdminAuth(), controller.GetQuotaDatesByUser)
 		dataRoute.GET("/self", middleware.UserAuth(), controller.GetUserQuotaDates)
+
+		riskRoute := apiRouter.Group("/risk")
+		riskRoute.Use(middleware.AdminAuth())
+		{
+			riskRoute.GET("/summary", controller.GetRiskSummary)
+			riskRoute.GET("/stats", controller.GetRiskUserStats)
+			riskRoute.GET("/records", controller.GetRiskRecords)
+		}
 
 		logRoute.Use(middleware.CORS(), middleware.CriticalRateLimit())
 		{

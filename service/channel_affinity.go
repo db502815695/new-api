@@ -11,7 +11,9 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/cachex"
+	"github.com/QuantumNous/new-api/service/channel_health"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
@@ -611,6 +613,19 @@ func GetPreferredChannelByAffinity(c *gin.Context, modelName string, usingGroup 
 			return 0, false
 		}
 		if found {
+			ch, chErr := model.CacheGetChannel(channelID)
+			if chErr != nil || ch == nil || ch.Status != common.ChannelStatusEnabled {
+				_, _ = cache.DeleteMany([]string{cacheKeySuffix})
+				return 0, false
+			}
+			if usingGroup != "auto" && !model.IsChannelEnabledForGroupModel(usingGroup, modelName, channelID) {
+				_, _ = cache.DeleteMany([]string{cacheKeySuffix})
+				return 0, false
+			}
+			// 渠道不健康时跳过亲和结果，不清除缓存（渠道恢复后旧亲和关系自然可用）
+			if channel_health.IsUnhealthy(channelID) {
+				return 0, false
+			}
 			return channelID, true
 		}
 		return 0, false
